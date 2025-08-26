@@ -20,7 +20,6 @@ jobs:
         node: [18, 20]
     env:
       NODE_ENV: test
-      EXAMPLE_VAR: ${{ vars.EXAMPLE_VAR }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -30,7 +29,12 @@ jobs:
           cache-dependency-path: src/node-app/package-lock.json
       - name: Install dependencies
         working-directory: src/node-app
-        run: npm ci || npm install
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
       - name: Run tests
         working-directory: src/node-app
         run: npm test -- --coverage
@@ -43,5 +47,4 @@ jobs:
           name: node-coverage-${{ matrix.node }}
           path: src/node-app/coverage
       - name: Job summary
-        run: |
-          echo "## Node ${{ matrix.node }} passed" >> $GITHUB_STEP_SUMMARY
+        run: echo "## Node ${{ matrix.node }} passed" >> "$GITHUB_STEP_SUMMARY"
