@@ -1,0 +1,10 @@
+name: Call reusable
+
+on:
+  workflow_dispatch:
+
+jobs:
+  call:
+    uses: ./.github/workflows/reusable.yml
+    with:
+      working_dir: src/node-app

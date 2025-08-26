@@ -1,0 +1,47 @@
+name: CI Node
+on:
+  push:
+    paths:
+      - ".github/workflows/ci-node.yml"
+      - "src/node-app/**"
+  pull_request:
+    paths:
+      - ".github/workflows/ci-node.yml"
+      - "src/node-app/**"
+concurrency:
+  group: ci-node-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [18, 20]
+    env:
+      NODE_ENV: test
+      EXAMPLE_VAR: ${{ vars.EXAMPLE_VAR }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+          cache-dependency-path: src/node-app/package-lock.json
+      - name: Install dependencies
+        working-directory: src/node-app
+        run: npm ci || npm install
+      - name: Run tests
+        working-directory: src/node-app
+        run: npm test -- --coverage
+        env:
+          CI: true
+      - name: Upload coverage artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: node-coverage-${{ matrix.node }}
+          path: src/node-app/coverage
+      - name: Job summary
+        run: |
+          echo "## Node ${{ matrix.node }} passed" >> $GITHUB_STEP_SUMMARY

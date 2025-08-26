@@ -1,0 +1,12 @@
+{
+  "name": "node-app",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "test": "jest --ci --colors"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}

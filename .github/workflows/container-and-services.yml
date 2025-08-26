@@ -1,0 +1,42 @@
+name: Container job with Postgres service
+
+on:
+  workflow_dispatch:
+
+jobs:
+  app:
+    runs-on: ubuntu-latest
+    container:
+      image: node:20-alpine
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: appdb
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres -d appdb"
+          --health-interval=5s
+          --health-timeout=3s
+          --health-retries=10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install psql
+        run: apk add --no-cache postgresql-client
+      - name: Wait for DB and run a query
+        env:
+          PGHOST: postgres
+          PGPORT: 5432
+          PGUSER: postgres
+          PGPASSWORD: postgres
+          PGDATABASE: appdb
+        run: |
+          for i in $(seq 1 20); do
+            psql -c 'select 1' && break || sleep 2
+          done
+          psql -c 'create table if not exists items(id serial primary key, name text);'
+          psql -c "insert into items(name) values ('hello');"
+          psql -c 'select * from items;'

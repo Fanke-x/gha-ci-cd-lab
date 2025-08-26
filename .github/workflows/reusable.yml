@@ -1,0 +1,33 @@
+name: Reusable CI
+
+on:
+  workflow_call:
+    inputs:
+      working_dir:
+        description: "Path to run tests in"
+        required: true
+        type: string
+    secrets:
+      EXTRA_TOKEN:
+        required: false
+    outputs:
+      summary:
+        description: "Run summary"
+        value: ${{ jobs.run.outputs.summary }}
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    outputs:
+      summary: ${{ steps.sum.outputs.summary }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run tests
+        working-directory: ${{ inputs.working_dir }}
+        run: |
+          if [ -f package.json ]; then npm ci && npm test --silent || true; fi
+          if [ -f requirements.txt ]; then pipx run pip==24.0 install -r requirements.txt && pipx run pytest -q || true; fi
+      - name: Summarize
+        id: sum
+        run: |
+          echo "summary=Tests ran in ${{ inputs.working_dir }}" >> "$GITHUB_OUTPUT"
